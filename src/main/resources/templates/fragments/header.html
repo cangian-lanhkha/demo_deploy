@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:fragment="head">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookStore - Hệ thống Quản lý Sách | HuynhLeHongXuyen</title>
+    <meta name="description" content="BookStore - Mua sách online, sách mới, sách bán chạy. Giá tốt, giao nhanh.">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<!-- SEO head for book detail pages -->
+
+<head th:fragment="seoHead(pageTitle, pageDesc, pageImage, pageUrl)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} + ' | BookStore'">BookStore</title>
+    <meta name="description" th:content="${pageDesc}">
+    <!-- Open Graph -->
+    <meta property="og:type" content="product">
+    <meta property="og:title" th:content="${pageTitle}">
+    <meta property="og:description" th:content="${pageDesc}">
+    <meta property="og:image" th:if="${pageImage}" th:content="${pageImage}">
+    <meta property="og:url" th:if="${pageUrl}" th:content="${pageUrl}">
+    <meta property="og:site_name" content="BookStore">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" th:content="${pageTitle}">
+    <meta name="twitter:description" th:content="${pageDesc}">
+    <meta name="twitter:image" th:if="${pageImage}" th:content="${pageImage}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}">
+                <i class="bi bi-book-half"></i> BookStore
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                style="border-color: rgba(129,140,248,0.3);">
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/}">
+                            <i class="bi bi-house-heart"></i> Trang chủ
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/books}">
+                            <i class="bi bi-journal-bookmark-fill"></i> Kho sách
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-receipt-cutoff"></i> Đơn hàng
+                        </a>
+                        <ul class="dropdown-menu"
+                            style="border-radius: 20px; border: 1px solid rgba(99,102,241,0.08); box-shadow: 0 15px 50px rgba(99,102,241,0.12);">
+                            <li><a class="dropdown-item" th:href="@{/orders}"><i class="bi bi-clock-history"></i> Lịch
+                                    sử đơn hàng</a></li>
+                            <li><a class="dropdown-item" th:href="@{/cart}"><i class="bi bi-cart3"></i> Giỏ hàng</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/admin}" style="color: #c084fc !important; font-weight: 700;">
+                            <i class="bi bi-speedometer2"></i> Quản trị
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav align-items-center gap-2">
+                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()" id="notifBellContainer">
+                        <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside" id="notifBellBtn">
+                            <i class="bi bi-bell-fill" style="font-size: 1.15rem;"></i>
+                            <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end notif-dropdown"
+                            style="width: 380px; max-height: 440px; overflow-y: auto;">
+                            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                                <h6 class="mb-0 fw-bold"><i class="bi bi-bell"></i> Thông báo</h6>
+                                <button class="btn btn-sm btn-link text-decoration-none p-0" id="markAllReadBtn"
+                                    style="color: #6366f1;">
+                                    Đọc tất cả
+                                </button>
+                            </div>
+                            <div id="notifList">
+                                <div class="text-center text-muted py-4">
+                                    <i class="bi bi-bell-slash" style="font-size: 1.5rem;"></i>
+                                    <p class="mb-0 mt-1 small">Chưa có thông báo</p>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" th:href="@{/wishlist}" title="Yêu thích">
+                            <i class="bi bi-heart" style="font-size: 1.1rem; color: #fb7185;"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/cart}">
+                            <i class="bi bi-bag-heart" style="font-size: 1.1rem;"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a class="btn btn-login" th:href="@{/login}">Đăng nhập</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a class="btn btn-register" th:href="@{/register}">Đăng ký</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <span class="user-info">
+                            <i class="bi bi-person-circle"></i>
+                            <span sec:authentication="name">User</span>
+                        </span>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <form th:action="@{/logout}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-login btn-sm">Đăng xuất</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <script th:fragment="notifScript">
+        (function () {
+            function loadNotifications() {
+                fetch('/notifications/api')
+                    .then(r => r.json())
+                    .then(data => {
+                        const badge = document.getElementById('notifBadge');
+                        const list = document.getElementById('notifList');
+                        if (!badge || !list) return;
+                        if (data.unreadCount > 0) {
+                            badge.textContent = data.unreadCount > 9 ? '9+' : data.unreadCount;
+                            badge.style.display = 'flex';
+                        } else { badge.style.display = 'none'; }
+                        if (data.notifications.length === 0) {
+                            list.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-bell-slash" style="font-size:1.5rem;"></i><p class="mb-0 mt-1 small">Chưa có thông báo</p></div>';
+                            return;
+                        }
+                        let html = '';
+                        data.notifications.forEach(function (n) {
+                            let icon = n.type === 'COUPON' ? 'bi-tag-fill text-warning' : 'bi-info-circle-fill text-primary';
+                            let bgClass = n.isRead ? '' : 'bg-light';
+                            let timeAgo = formatTimeAgo(n.createdAt);
+                            html += '<div class="notif-item ' + bgClass + '" data-id="' + n.id + '">' +
+                                '<div class="d-flex gap-2 align-items-start"><i class="bi ' + icon + '" style="font-size:1.1rem; margin-top:2px;"></i>' +
+                                '<div class="flex-grow-1"><div class="fw-semibold small">' + n.title + '</div>' +
+                                '<div class="text-muted small">' + n.message + '</div>';
+                            if (n.couponCode) html += '<span class="badge bg-warning text-dark mt-1">' + n.couponCode + '</span>';
+                            html += '<div class="text-muted mt-1" style="font-size:0.7rem;">' + timeAgo + '</div></div></div></div>';
+                        });
+                        list.innerHTML = html;
+                        list.querySelectorAll('.notif-item').forEach(function (el) {
+                            el.addEventListener('click', function () {
+                                let id = this.getAttribute('data-id');
+                                fetch('/notifications/read/' + id, { method: 'POST' }).then(() => { this.classList.remove('bg-light'); loadNotifications(); });
+                            });
+                        });
+                    }).catch(() => { });
+            }
+            function formatTimeAgo(dateStr) {
+                let date = new Date(dateStr); let now = new Date(); let diff = Math.floor((now - date) / 1000);
+                if (diff < 60) return 'Vừa xong'; if (diff < 3600) return Math.floor(diff / 60) + ' phút trước';
+                if (diff < 86400) return Math.floor(diff / 3600) + ' giờ trước'; return Math.floor(diff / 86400) + ' ngày trước';
+            }
+            document.addEventListener('DOMContentLoaded', function () {
+                loadNotifications(); setInterval(loadNotifications, 30000);
+                var markAllBtn = document.getElementById('markAllReadBtn');
+                if (markAllBtn) { markAllBtn.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); fetch('/notifications/read-all', { method: 'POST' }).then(() => loadNotifications()); }); }
+            });
+        })();
+    </script>
+
+    <footer th:fragment="footer" class="footer-custom">
+        <p class="mb-0">&copy; 2024 BookStore - Hệ thống Quản lý Sách HuynhLeHongXuyen. Powered by Spring Boot.</p>
+    </footer>
+</body>
+
+</html>

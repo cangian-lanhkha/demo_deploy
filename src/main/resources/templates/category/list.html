@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/header :: head}"></head>
+
+<body>
+    <nav th:replace="~{fragments/header :: navbar}"></nav>
+    <main class="container py-4">
+        <div class="section-header">
+            <h2><i class="bi bi-tags-fill" style="color:#6366f1;"></i> Danh mục sách</h2>
+            <p>Tất cả thể loại sách hiện có</p>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-3 col-md-4 col-6" th:each="cat : ${categories}">
+                <a th:href="@{/books}" class="text-decoration-none">
+                    <div class="category-card">
+                        <div class="category-icon"><i class="bi bi-bookmark-star-fill"></i></div>
+                        <h6 th:text="${cat.name}">Danh mục</h6>
+                        <small class="text-muted"
+                            th:text="${(bookCountMap[cat.id] != null ? bookCountMap[cat.id] : 0) + ' cuốn sách'}">0 cuốn</small>
+                    </div>
+                </a>
+            </div>
+        </div>
+        <div class="text-center mt-4" th:if="${#lists.isEmpty(categories)}">
+            <div class="card-glass p-5"><i class="bi bi-tags" style="font-size:3rem;color:#a78bfa;"></i>
+                <p class="text-muted mt-2 mb-0">Chưa có danh mục nào</p>
+            </div>
+        </div>
+    </main>
+    <footer th:replace="~{fragments/header :: footer}"></footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:replace="~{fragments/header :: notifScript}"></script>
+</body>
+
+</html>

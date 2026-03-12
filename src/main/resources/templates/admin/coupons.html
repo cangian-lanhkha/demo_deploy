@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{fragments/admin-layout :: adminHead}"></head>
+
+<body>
+    <div th:replace="~{fragments/admin-layout :: sidebar}"></div>
+    <div th:replace="~{fragments/admin-layout :: topbar}"></div>
+    <div class="admin-content">
+        <div class="admin-page-header">
+            <h3>🎟️ Quản lý mã giảm giá</h3>
+            <p>Tạo và quản lý mã khuyến mãi</p>
+        </div>
+        <div th:if="${success}" class="alert alert-success" style="border-radius:12px;" th:text="${success}">OK</div>
+        <div th:if="${error}" class="alert alert-danger" style="border-radius:12px;" th:text="${error}">Error</div>
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h5><i class="bi bi-plus-circle"></i> Thêm mã giảm giá</h5>
+                    </div>
+                    <form th:action="@{/admin/coupons/add}" method="post">
+                        <div class="mb-2"><label class="form-label small fw-semibold">Mã *</label><input type="text"
+                                name="code" class="form-control form-control-sm" required style="border-radius:10px;"
+                                placeholder="VD: SALE20"></div>
+                        <div class="mb-2"><label class="form-label small fw-semibold">Mô tả</label><input type="text"
+                                name="description" class="form-control form-control-sm" style="border-radius:10px;">
+                        </div>
+                        <div class="mb-2"><label class="form-label small fw-semibold">Giảm (%) *</label><input
+                                type="number" name="discountPercent" class="form-control form-control-sm" required
+                                min="1" max="100" style="border-radius:10px;"></div>
+                        <div class="mb-2"><label class="form-label small fw-semibold">Giảm tối đa (₫)</label><input
+                                type="number" name="maxDiscount" class="form-control form-control-sm"
+                                style="border-radius:10px;"></div>
+                        <div class="mb-2"><label class="form-label small fw-semibold">Đơn tối thiểu (₫)</label><input
+                                type="number" name="minOrderAmount" class="form-control form-control-sm"
+                                style="border-radius:10px;"></div>
+                        <div class="mb-2"><label class="form-label small fw-semibold">Ngày bắt đầu</label><input
+                                type="datetime-local" name="startDate" class="form-control form-control-sm"
+                                style="border-radius:10px;"></div>
+                        <div class="mb-2"><label class="form-label small fw-semibold">Ngày kết thúc</label><input
+                                type="datetime-local" name="endDate" class="form-control form-control-sm"
+                                style="border-radius:10px;"></div>
+                        <div class="mb-3"><label class="form-label small fw-semibold">Lượt dùng tối đa</label><input
+                                type="number" name="usageLimit" class="form-control form-control-sm"
+                                style="border-radius:10px;"></div>
+                        <button type="submit" class="btn btn-admin-gold btn-sm w-100"><i class="bi bi-plus-circle"></i>
+                            Tạo mã</button>
+                    </form>
+                </div>
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h5><i class="bi bi-bell"></i> Gửi thông báo</h5>
+                    </div>
+                    <form th:action="@{/admin/notifications/send}" method="post">
+                        <div class="mb-2"><input type="text" name="title" class="form-control form-control-sm"
+                                placeholder="Tiêu đề" required style="border-radius:10px;"></div>
+                        <div class="mb-2"><textarea name="message" class="form-control form-control-sm" rows="2"
+                                placeholder="Nội dung" required style="border-radius:10px;"></textarea></div>
+                        <div class="mb-2"><select name="userId" class="form-select form-select-sm"
+                                style="border-radius:10px;">
+                                <option value="">-- Chọn người nhận --</option>
+                                <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.username}">user
+                                </option>
+                            </select></div>
+                        <div class="form-check mb-2"><input class="form-check-input" type="checkbox" name="sendToAll"
+                                value="true" id="sendAllNotif"><label class="form-check-label small"
+                                for="sendAllNotif">Gửi cho tất cả</label></div>
+                        <button type="submit" class="btn btn-admin-primary btn-sm w-100"><i class="bi bi-send"></i>
+                            Gửi</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="admin-table-wrapper">
+                    <div class="admin-table-header">
+                        <h5><i class="bi bi-ticket-perforated"></i> Danh sách mã giảm giá</h5>
+                    </div>
+                    <div class="admin-table">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Mã</th>
+                                    <th>Giảm</th>
+                                    <th>Trạng thái</th>
+                                    <th>Đã dùng</th>
+                                    <th>Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="coupon : ${coupons}">
+                                    <td><span class="badge badge-admin" style="background:#fef3c7;color:#92400e;"
+                                            th:text="${coupon.code}">CODE</span><br><small class="text-muted"
+                                            th:text="${coupon.description}">Mô tả</small></td>
+                                    <td class="fw-bold" th:text="${coupon.discountPercent + '%'}">10%</td>
+                                    <td><span th:if="${coupon.active}" class="badge"
+                                            style="background:#ede9fe;color:#6366f1;border-radius:9999px;">Hoạt
+                                            động</span><span th:unless="${coupon.active}" class="badge bg-secondary"
+                                            style="border-radius:8px;">Tắt</span></td>
+                                    <td
+                                        th:text="${coupon.usedCount + '/' + (coupon.usageLimit != null ? coupon.usageLimit : '∞')}">
+                                        0/100</td>
+                                    <td>
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            <form th:action="@{'/admin/coupons/' + ${coupon.id} + '/toggle'}"
+                                                method="post" class="d-inline"><button type="submit"
+                                                    class="btn btn-sm btn-outline-warning" style="border-radius:8px;"
+                                                    th:title="${coupon.active ? 'Tắt' : 'Bật'}"><i
+                                                        th:class="${coupon.active ? 'bi bi-pause' : 'bi bi-play'}"></i></button>
+                                            </form>
+                                            <a th:href="@{'/admin/coupons/delete/' + ${coupon.id}}"
+                                                class="btn btn-sm btn-outline-danger" style="border-radius:8px;"
+                                                onclick="return confirm('Xóa mã này?')"><i class="bi bi-trash3"></i></a>
+                                            <div class="dropdown d-inline">
+                                                <button class="btn btn-sm btn-outline-primary dropdown-toggle"
+                                                    style="border-radius:8px;" data-bs-toggle="dropdown"><i
+                                                        class="bi bi-send"></i></button>
+                                                <div class="dropdown-menu p-2"
+                                                    style="min-width:200px;border-radius:14px;">
+                                                    <form th:action="@{'/admin/coupons/' + ${coupon.id} + '/send'}"
+                                                        method="post">
+                                                        <select name="userId" class="form-select form-select-sm mb-2"
+                                                            style="border-radius:8px;">
+                                                            <option value="">-- Chọn user --</option>
+                                                            <option th:each="user : ${users}" th:value="${user.id}"
+                                                                th:text="${user.username}">user</option>
+                                                        </select>
+                                                        <div class="form-check mb-2"><input class="form-check-input"
+                                                                type="checkbox" name="sendToAll" value="true"><label
+                                                                class="form-check-label small">Gửi tất cả</label></div>
+                                                        <button type="submit"
+                                                            class="btn btn-sm btn-admin-primary w-100">Gửi mã</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>function toggleSidebar() { document.getElementById('adminSidebar').classList.toggle('show'); }</script>
+    <script>document.getElementById('link-coupons').classList.add('active');</script>
+</body>
+
+</html>

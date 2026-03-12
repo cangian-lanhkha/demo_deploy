@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; }
+        .header { background: #2c3e50; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; }
+        .order-info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        .order-info p { margin: 5px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #dee2e6; }
+        th { background: #f8f9fa; font-weight: bold; }
+        .total { font-size: 18px; font-weight: bold; color: #e74c3c; text-align: right; padding-top: 10px; }
+        .footer { background: #f8f9fa; padding: 15px; text-align: center; color: #6c757d; font-size: 12px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>BookStore</h1>
+        <p>Xác nhận đơn hàng</p>
+    </div>
+    <div class="content">
+        <p>Xin chào <strong th:text="${invoice.customerName}">Khách hàng</strong>,</p>
+        <p>Cảm ơn bạn đã đặt hàng tại BookStore. Đơn hàng của bạn đã được tiếp nhận thành công.</p>
+
+        <div class="order-info">
+            <p><strong>Mã đơn hàng:</strong> <span th:text="${invoice.orderCode}"></span></p>
+            <p><strong>Ngày đặt:</strong> <span th:text="${#temporals.format(invoice.orderDate, 'dd/MM/yyyy HH:mm')}"></span></p>
+            <p><strong>Phương thức thanh toán:</strong> <span th:text="${invoice.paymentMethod?.displayName}"></span></p>
+            <p><strong>Trạng thái:</strong> <span th:text="${invoice.status?.displayName}"></span></p>
+        </div>
+
+        <h3>Chi tiết đơn hàng</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th>SL</th>
+                    <th style="text-align:right">Đơn giá</th>
+                    <th style="text-align:right">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${invoice.items}">
+                    <td th:text="${item.bookTitle}"></td>
+                    <td th:text="${item.quantity}"></td>
+                    <td style="text-align:right" th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                    <td style="text-align:right" th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${invoice.discount != null and invoice.discount > 0}">
+            <p style="text-align:right">Giảm giá: <strong th:text="'-' + ${#numbers.formatDecimal(invoice.discount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></strong></p>
+        </div>
+        <p class="total" th:text="'Tổng cộng: ' + ${#numbers.formatDecimal(invoice.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></p>
+
+        <div class="order-info">
+            <p><strong>Địa chỉ giao hàng:</strong> <span th:text="${invoice.address}"></span></p>
+            <p><strong>SĐT:</strong> <span th:text="${invoice.phone}"></span></p>
+        </div>
+    </div>
+    <div class="footer">
+        <p>Email này được gửi tự động. Vui lòng không trả lời.</p>
+        <p>&copy; BookStore - Hệ thống bán sách trực tuyến</p>
+    </div>
+</div>
+</body>
+</html>

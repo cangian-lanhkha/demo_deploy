@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{fragments/admin-layout :: adminHead}"></head>
+
+<body>
+    <div th:replace="~{fragments/admin-layout :: sidebar}"></div>
+    <div th:replace="~{fragments/admin-layout :: topbar}"></div>
+    <div class="admin-content">
+        <div class="admin-page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h3>📊 Tổng quan & Báo cáo</h3>
+                <p class="mb-0">Thống kê doanh thu, đơn hàng, sản phẩm bán chạy</p>
+            </div>
+            <!-- Date range filter -->
+            <form class="d-flex align-items-center gap-2 flex-wrap" method="get" th:action="@{/admin}">
+                <input type="date" name="from" class="form-control form-control-sm" style="width:auto"
+                    th:value="${from}">
+                <span>→</span>
+                <input type="date" name="to" class="form-control form-control-sm" style="width:auto" th:value="${to}">
+                <button class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i> Lọc</button>
+                <a th:href="@{/admin/reports/export(from=${from}, to=${to})}" class="btn btn-sm btn-outline-success"><i
+                        class="bi bi-download"></i> Xuất CSV</a>
+            </form>
+        </div>
+
+        <!-- Summary stat cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="stat-card-admin animate-in">
+                    <div class="stat-icon stat-icon-blue"><i class="bi bi-journal-bookmark-fill"></i></div>
+                    <div class="stat-value" th:text="${totalBooks}">0</div>
+                    <div class="stat-label">Đầu sách</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card-admin animate-in">
+                    <div class="stat-icon stat-icon-red"><i class="bi bi-tags-fill"></i></div>
+                    <div class="stat-value" th:text="${totalCategories}">0</div>
+                    <div class="stat-label">Danh mục</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card-admin animate-in">
+                    <div class="stat-icon stat-icon-green"><i class="bi bi-receipt"></i></div>
+                    <div class="stat-value" th:text="${totalOrders}">0</div>
+                    <div class="stat-label">Tổng đơn hàng</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card-admin animate-in">
+                    <div class="stat-icon stat-icon-purple"><i class="bi bi-people-fill"></i></div>
+                    <div class="stat-value" th:text="${totalUsers}">0</div>
+                    <div class="stat-label">Người dùng</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Period revenue summary -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card-admin" style="border-left:4px solid #e11d48;">
+                    <div class="stat-label">DOANH THU GIAI ĐOẠN</div>
+                    <div class="stat-value"
+                        style="background:linear-gradient(135deg,#e11d48,#c026d3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;"
+                        th:text="${#numbers.formatDecimal(summary['revenue'], 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card-admin" style="border-left:4px solid #2563eb;">
+                    <div class="stat-label">ĐƠN THÀNH CÔNG / TỔNG</div>
+                    <div class="stat-value"
+                        th:text="${summary['successfulOrders']} + ' / ' + ${summary['totalOrders']}">0 / 0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card-admin" style="border-left:4px solid #16a34a;">
+                    <div class="stat-label">TỶ LỆ THÀNH CÔNG</div>
+                    <div class="stat-value" th:text="${summary['conversionRate']} + '%'">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-8">
+                <div class="stat-card-admin">
+                    <h6 class="mb-3"><i class="bi bi-graph-up"></i> Doanh thu theo ngày</h6>
+                    <canvas id="revenueChart" height="280"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="stat-card-admin">
+                    <h6 class="mb-3"><i class="bi bi-pie-chart"></i> Đơn hàng theo trạng thái</h6>
+                    <canvas id="statusChart" height="280"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-lg-5">
+                <div class="stat-card-admin">
+                    <h6 class="mb-3"><i class="bi bi-credit-card"></i> Doanh thu theo phương thức TT</h6>
+                    <canvas id="paymentChart" height="260"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <!-- Top selling books -->
+                <div class="stat-card-admin">
+                    <h6 class="mb-3"><i class="bi bi-star-fill text-warning"></i> Top 10 sách bán chạy</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Tên sách</th>
+                                    <th class="text-end">SL bán</th>
+                                    <th class="text-end">Doanh thu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="b, i : ${topBooks}">
+                                    <td th:text="${i.index + 1}">1</td>
+                                    <td th:text="${b['title']}">Sách</td>
+                                    <td class="text-end" th:text="${b['quantity']}">0</td>
+                                    <td class="text-end price-admin"
+                                        th:text="${#numbers.formatDecimal(b['revenue'], 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+                                        0 ₫</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(topBooks)}">
+                                    <td colspan="4" class="text-center text-muted">Chưa có dữ liệu</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top customers + recent orders -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-5">
+                <div class="stat-card-admin">
+                    <h6 class="mb-3"><i class="bi bi-person-hearts"></i> Top 10 khách hàng</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Tên</th>
+                                    <th class="text-end">Số đơn</th>
+                                    <th class="text-end">Tổng chi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="c, i : ${topCustomers}">
+                                    <td th:text="${i.index + 1}">1</td>
+                                    <td th:text="${c['username']}">User</td>
+                                    <td class="text-end" th:text="${c['orders']}">0</td>
+                                    <td class="text-end price-admin"
+                                        th:text="${#numbers.formatDecimal(c['totalSpent'], 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+                                        0 ₫</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(topCustomers)}">
+                                    <td colspan="4" class="text-center text-muted">Chưa có dữ liệu</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="admin-table-wrapper">
+                    <div class="admin-table-header">
+                        <h5><i class="bi bi-receipt"></i> Đơn hàng gần đây</h5>
+                    </div>
+                    <div class="admin-table">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Khách hàng</th>
+                                    <th>Ngày đặt</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="order : ${recentOrders}">
+                                    <td><a th:href="@{/admin/orders/{id}(id=${order.id})}" th:text="${order.id}">1</a>
+                                    </td>
+                                    <td th:text="${order.customerName}">Tên</td>
+                                    <td th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy HH:mm')}">01/01</td>
+                                    <td class="price-admin"
+                                        th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+                                        0 ₫
+                                    </td>
+                                    <td><span class="badge"
+                                            th:classappend="${order.status.name() == 'COMPLETED' ? 'bg-success' : (order.status.name() == 'CANCELLED' ? 'bg-danger' : (order.status.name() == 'SHIPPING' ? 'bg-info' : 'bg-warning'))}"
+                                            th:text="${order.status.displayName}">Trạng thái</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script>function toggleSidebar() { document.getElementById('adminSidebar').classList.toggle('show'); }</script>
+    <script>document.getElementById('link-dashboard').classList.add('active');</script>
+
+    <script th:inline="javascript">
+        const revenueData = /*[[${revenueByDay}]]*/ { labels: [], data: [] };
+        const statusData = /*[[${orderByStatus}]]*/ { labels: [], data: [] };
+        const paymentData = /*[[${revenueByPayment}]]*/ { labels: [], data: [] };
+
+        // Revenue line chart
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: revenueData.labels,
+                datasets: [{
+                    label: 'Doanh thu (₫)',
+                    data: revenueData.data,
+                    borderColor: '#e11d48',
+                    backgroundColor: 'rgba(225,29,72,0.1)',
+                    fill: true, tension: 0.3, pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('vi-VN') + ' ₫' } }
+                }
+            }
+        });
+
+        // Order status pie chart
+        const statusColors = ['#f59e0b', '#3b82f6', '#8b5cf6', '#06b6d4', '#22c55e', '#10b981', '#ef4444', '#f97316'];
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: statusData.labels,
+                datasets: [{ data: statusData.data, backgroundColor: statusColors.slice(0, statusData.labels.length) }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+        });
+
+        // Payment method bar chart
+        const payColors = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444'];
+        new Chart(document.getElementById('paymentChart'), {
+            type: 'bar',
+            data: {
+                labels: paymentData.labels,
+                datasets: [{
+                    label: 'Doanh thu (₫)',
+                    data: paymentData.data,
+                    backgroundColor: payColors.slice(0, paymentData.labels.length)
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString('vi-VN') } } }
+            }
+        });
+    </script>
+</body>
+
+</html>

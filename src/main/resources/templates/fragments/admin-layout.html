@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:fragment="adminHead">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản trị - BookStore | HuynhLeHongXuyen</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+
+<body>
+    <div th:fragment="sidebar" class="admin-sidebar" id="adminSidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-brand">📚 BookStore</span>
+            <small class="sidebar-subtitle">Bảng Quản Trị</small>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="sidebar-link" id="link-dashboard">
+                <span class="sidebar-icon"><i class="bi bi-speedometer2"></i></span> Tổng quan
+            </a>
+            <a th:href="@{/admin/books}" class="sidebar-link" id="link-books">
+                <span class="sidebar-icon"><i class="bi bi-journal-bookmark-fill"></i></span> Quản lý sách
+            </a>
+            <a th:href="@{/admin/categories}" class="sidebar-link" id="link-categories">
+                <span class="sidebar-icon"><i class="bi bi-tags-fill"></i></span> Danh mục
+            </a>
+            <a th:href="@{/admin/orders}" class="sidebar-link" id="link-orders">
+                <span class="sidebar-icon"><i class="bi bi-receipt"></i></span> Đơn hàng
+            </a>
+            <a th:href="@{/admin/users}" class="sidebar-link" id="link-users">
+                <span class="sidebar-icon"><i class="bi bi-people-fill"></i></span> Người dùng
+            </a>
+            <a th:href="@{/admin/coupons}" class="sidebar-link" id="link-coupons">
+                <span class="sidebar-icon"><i class="bi bi-ticket-perforated-fill"></i></span> Mã giảm giá
+            </a>
+            <hr class="sidebar-divider">
+            <a th:href="@{/}" class="sidebar-link sidebar-link-secondary">
+                <span class="sidebar-icon"><i class="bi bi-arrow-left-circle"></i></span> Về trang chủ
+            </a>
+            <form th:action="@{/logout}" method="post" class="px-3 mt-2">
+                <button type="submit" class="btn btn-outline-light btn-sm w-100" style="border-radius: 10px;">
+                    <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                </button>
+            </form>
+        </nav>
+        <div class="sidebar-footer">
+            <small>✨ Xin chào, <span sec:authentication="name">Admin</span></small>
+        </div>
+    </div>
+
+    <div th:fragment="topbar" class="admin-topbar">
+        <button class="btn btn-sm btn-outline-secondary d-lg-none" onclick="toggleSidebar()"
+            style="border-radius: 10px;">
+            <i class="bi bi-list"></i> Menu
+        </button>
+        <div class="topbar-right">
+            <span class="topbar-user">
+                <span sec:authentication="name">Admin</span>
+                <span class="badge ms-1"
+                    style="background: linear-gradient(135deg, #e11d48, #c026d3); font-size: 0.7rem; border-radius: 9999px;">ADMIN</span>
+            </span>
+        </div>
+    </div>
+</body>
+
+</html>

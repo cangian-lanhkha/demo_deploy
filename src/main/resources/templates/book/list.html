@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:replace="~{fragments/header :: head}"></head>
+
+<body>
+    <nav th:replace="~{fragments/header :: navbar}"></nav>
+    <main class="container py-4">
+        <div class="section-header">
+            <h2><i class="bi bi-journal-bookmark-fill" style="color:#6366f1;"></i> Kho sách</h2>
+            <p th:text="'Tìm thấy ' + ${totalItems} + ' cuốn sách'">Tìm thấy 0 cuốn sách</p>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="card-glass p-3 mb-4">
+            <form th:action="@{/books}" method="get">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label small fw-semibold">Tìm kiếm</label>
+                        <div class="input-group">
+                            <span class="input-group-text"
+                                style="border-radius:14px 0 0 14px; background:#ede9fe; border-color:#ddd6fe;">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" name="keyword" class="form-control"
+                                placeholder="Tìm sách theo tên hoặc tác giả..." th:value="${keyword}"
+                                style="border-radius:0 14px 14px 0; border-color:#ddd6fe;">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold">Danh mục</label>
+                        <select name="categoryId" class="form-select" style="border-radius:14px; border-color:#ddd6fe;">
+                            <option value="">Tất cả</option>
+                            <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"
+                                th:selected="${categoryId != null && categoryId == cat.id}">Danh mục</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-semibold">Sắp xếp</label>
+                        <select name="sort" class="form-select" style="border-radius:14px; border-color:#ddd6fe;">
+                            <option value="newest" th:selected="${sort == 'newest'}">Mới nhất</option>
+                            <option value="price-asc" th:selected="${sort == 'price-asc'}">Giá tăng dần</option>
+                            <option value="price-desc" th:selected="${sort == 'price-desc'}">Giá giảm dần</option>
+                            <option value="rating" th:selected="${sort == 'rating'}">Đánh giá cao</option>
+                            <option value="bestseller" th:selected="${sort == 'bestseller'}">Bán chạy</option>
+                            <option value="name" th:selected="${sort == 'name'}">Tên A-Z</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2 align-items-end">
+                        <button type="submit" class="btn btn-accent flex-fill"><i class="bi bi-search"></i> Lọc</button>
+                        <a th:href="@{/books}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+                    </div>
+                </div>
+                <!-- Advanced filters row -->
+                <div class="row g-2 mt-2">
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted">Giá từ</label>
+                        <input type="number" name="minPrice" class="form-control form-control-sm" th:value="${minPrice}"
+                            placeholder="0" min="0" style="border-radius:10px;">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted">Giá đến</label>
+                        <input type="number" name="maxPrice" class="form-control form-control-sm" th:value="${maxPrice}"
+                            placeholder="∞" min="0" style="border-radius:10px;">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted">Đánh giá từ</label>
+                        <select name="minRating" class="form-select form-select-sm" style="border-radius:10px;">
+                            <option value="">Tất cả</option>
+                            <option value="4" th:selected="${minRating != null && minRating == 4}">⭐ 4+</option>
+                            <option value="3" th:selected="${minRating != null && minRating == 3}">⭐ 3+</option>
+                            <option value="2" th:selected="${minRating != null && minRating == 2}">⭐ 2+</option>
+                            <option value="1" th:selected="${minRating != null && minRating == 1}">⭐ 1+</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted">Tình trạng</label>
+                        <select name="inStock" class="form-select form-select-sm" style="border-radius:10px;">
+                            <option value="">Tất cả</option>
+                            <option value="true" th:selected="${inStock != null && inStock}">Còn hàng</option>
+                            <option value="false" th:selected="${inStock != null && !inStock}">Hết hàng</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Active Filters -->
+        <div class="mb-3 d-flex flex-wrap gap-2"
+            th:if="${keyword != null || categoryId != null || minPrice != null || maxPrice != null || minRating != null || inStock != null}">
+            <span class="badge rounded-pill bg-primary" th:if="${keyword != null}">
+                <i class="bi bi-search"></i> <span th:text="${keyword}"></span>
+            </span>
+            <span class="badge rounded-pill bg-info" th:if="${minPrice != null}">
+                Từ <span th:text="${#numbers.formatDecimal(minPrice, 0, 'COMMA', 0, 'POINT')}"></span>₫
+            </span>
+            <span class="badge rounded-pill bg-info" th:if="${maxPrice != null}">
+                Đến <span th:text="${#numbers.formatDecimal(maxPrice, 0, 'COMMA', 0, 'POINT')}"></span>₫
+            </span>
+            <span class="badge rounded-pill bg-warning text-dark" th:if="${minRating != null}">
+                ⭐ <span th:text="${minRating}"></span>+ sao
+            </span>
+            <span class="badge rounded-pill bg-success" th:if="${inStock != null && inStock}">Còn hàng</span>
+            <a th:href="@{/books}" class="badge rounded-pill bg-secondary text-decoration-none">
+                <i class="bi bi-x-lg"></i> Xóa bộ lọc
+            </a>
+        </div>
+
+        <!-- Book Grid -->
+        <div class="row g-3">
+            <div class="col-xl-3 col-lg-4 col-md-6" th:each="book : ${books}">
+                <div class="book-card">
+                    <a th:href="@{'/books/' + ${book.id}}" class="text-decoration-none">
+                        <div class="book-card-img">
+                            <img th:if="${book.image != null}" th:src="@{'/images/' + ${book.image}}" alt="Sách"
+                                loading="lazy">
+                            <div th:unless="${book.image != null}" class="book-card-placeholder">
+                                <i class="bi bi-journal-bookmark" style="font-size:2rem;"></i>
+                            </div>
+                            <span class="book-badge" th:if="${book.category != null}"
+                                th:text="${book.category.name}">Danh mục</span>
+                        </div>
+                    </a>
+                    <div class="book-card-body">
+                        <a th:href="@{'/books/' + ${book.id}}" class="text-decoration-none text-dark">
+                            <h6 class="book-card-title" th:text="${book.title}">Tên sách</h6>
+                        </a>
+                        <p class="book-card-author" th:text="${book.author != null ? book.author : 'Chưa rõ tác giả'}">
+                            Tác giả</p>
+                        <!-- Ratings -->
+                        <div class="d-flex align-items-center gap-1 mb-1 small">
+                            <span th:each="i : ${#numbers.sequence(1, 5)}"
+                                th:classappend="${i <= book.averageRating} ? 'text-warning' : 'text-muted'">
+                                <i class="bi bi-star-fill"></i>
+                            </span>
+                            <span class="text-muted" th:text="'(' + ${book.totalReviews} + ')'"></span>
+                        </div>
+                        <div class="book-card-footer d-flex justify-content-between align-items-center">
+                            <span class="book-card-price"
+                                th:text="${book.price != null ? #numbers.formatDecimal(book.price, 0, 'COMMA', 0, 'POINT') + ' ₫' : 'Liên hệ'}">0
+                                ₫</span>
+                            <form th:action="@{'/cart/add/' + ${book.id}}" method="post">
+                                <button type="submit" class="btn btn-sm btn-accent">
+                                    <i class="bi bi-cart-plus"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4" th:if="${#lists.isEmpty(books)}">
+            <div class="card-glass p-5"><i class="bi bi-journal-x" style="font-size:3rem; color:#a78bfa;"></i>
+                <p class="text-muted mt-2 mb-0">Không tìm thấy sách nào</p>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${totalPages > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link"
+                        th:href="@{/books(page=${currentPage - 1}, keyword=${keyword}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice}, minRating=${minRating}, inStock=${inStock}, sort=${sort})}"
+                        style="border-radius:14px 0 0 14px;">«</a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                    th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link"
+                        th:href="@{/books(page=${i}, keyword=${keyword}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice}, minRating=${minRating}, inStock=${inStock}, sort=${sort})}"
+                        th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                    <a class="page-link"
+                        th:href="@{/books(page=${currentPage + 1}, keyword=${keyword}, categoryId=${categoryId}, minPrice=${minPrice}, maxPrice=${maxPrice}, minRating=${minRating}, inStock=${inStock}, sort=${sort})}"
+                        style="border-radius:0 14px 14px 0;">»</a>
+                </li>
+            </ul>
+        </nav>
+    </main>
+    <footer th:replace="~{fragments/header :: footer}"></footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:replace="~{fragments/header :: notifScript}"></script>
+</body>
+
+</html>

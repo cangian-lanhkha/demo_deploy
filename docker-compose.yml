@@ -1,0 +1,96 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: bookstore-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-mydatabase2}
+      MYSQL_USER: ${DB_USERNAME:-bookstore}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-bookstore123}
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backup:/backup
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bookstore-net
+
+  app:
+    build: .
+    container_name: bookstore-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${SERVER_PORT:-8081}:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-mydatabase2}
+      DB_USERNAME: ${DB_USERNAME:-bookstore}
+      DB_PASSWORD: ${DB_PASSWORD:-bookstore123}
+      JPA_SHOW_SQL: "false"
+      THYMELEAF_CACHE: "true"
+      ACTUATOR_HEALTH_DETAILS: never
+      # Payment Gateway keys (set in .env)
+      SEPAY_API_TOKEN: ${SEPAY_API_TOKEN:-}
+      SEPAY_ACCOUNT_NUMBER: ${SEPAY_ACCOUNT_NUMBER:-}
+      SEPAY_BANK_CODE: ${SEPAY_BANK_CODE:-}
+      SEPAY_ACCOUNT_NAME: ${SEPAY_ACCOUNT_NAME:-}
+      MOMO_ENDPOINT: ${MOMO_ENDPOINT:-}
+      MOMO_PARTNER_CODE: ${MOMO_PARTNER_CODE:-}
+      MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY:-}
+      MOMO_SECRET_KEY: ${MOMO_SECRET_KEY:-}
+      MOMO_RETURN_URL: ${MOMO_RETURN_URL:-}
+      MOMO_IPN_URL: ${MOMO_IPN_URL:-}
+      VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-}
+      VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-}
+      VNPAY_URL: ${VNPAY_URL:-}
+      VNPAY_RETURN_URL: ${VNPAY_RETURN_URL:-}
+      ZALOPAY_APP_ID: ${ZALOPAY_APP_ID:-}
+      ZALOPAY_KEY1: ${ZALOPAY_KEY1:-}
+      ZALOPAY_KEY2: ${ZALOPAY_KEY2:-}
+      ZALOPAY_ENDPOINT: ${ZALOPAY_ENDPOINT:-}
+      ZALOPAY_CALLBACK_URL: ${ZALOPAY_CALLBACK_URL:-}
+      ZALOPAY_REDIRECT_URL: ${ZALOPAY_REDIRECT_URL:-}
+      # Missing payment env vars
+      MOMO_QUERY_URL: ${MOMO_QUERY_URL:-}
+      VNPAY_API_URL: ${VNPAY_API_URL:-}
+      # App
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8081}
+      UPLOAD_DIR: ${UPLOAD_DIR:-uploads/images}
+      # Email
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@bookstore.vn}
+    volumes:
+      - uploads_data:/app/uploads
+      - app_logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+    networks:
+      - bookstore-net
+
+volumes:
+  mysql_data:
+  uploads_data:
+  app_logs:
+
+networks:
+  bookstore-net:
+    driver: bridge
