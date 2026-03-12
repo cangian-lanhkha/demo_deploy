@@ -23,7 +23,7 @@ import java.util.Set;
 
 @Configuration
 @RequiredArgsConstructor
-@org.springframework.context.annotation.Profile("dev")
+@org.springframework.context.annotation.Profile({"dev", "prod"})
 public class DataInitializer {
         private final IRoleRepository roleRepository;
         private final IUserRepository userRepository;
